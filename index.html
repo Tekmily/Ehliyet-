@@ -1,77 +1,1769 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>3D Arcade Runner (Bundle)</title>
-  <meta name="color-scheme" content="dark" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ehliyet Kart Sistemi</title>
   <style>
-    html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#0b1020; }
-    #app { position:relative; width:100%; height:100%; touch-action:none; }
-    canvas { display:block; width:100%; height:100%; }
-
-    #hud {
-      position:absolute; left:0; right:0; top:0;
-      display:flex; justify-content:center; pointer-events:none;
-      padding: env(safe-area-inset-top) 0 0 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
-    #countBox {
-      margin-top: 14px;
-      background: rgba(0,0,0,.35);
-      border: 1px solid rgba(255,255,255,.10);
-      backdrop-filter: blur(8px);
-      border-radius: 14px;
-      padding: 10px 14px;
-      color: white;
-      letter-spacing: .2px;
-      display:flex; align-items:center; gap:10px;
-      transform-origin:center;
-    }
-    #countLabel { opacity:.8; font-size:13px; }
-    #countValue { font-weight:800; font-size:22px; }
-
-    .pop { animation: pop .22s ease-out; }
-    @keyframes pop { 0%{transform:scale(1)} 60%{transform:scale(1.18)} 100%{transform:scale(1)} }
-
-    #hint {
-      position:absolute; left:0; right:0; bottom:0;
-      display:flex; justify-content:center; pointer-events:none;
-      padding-bottom: calc(14px + env(safe-area-inset-bottom));
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: rgba(255,255,255,.65);
-      font-size: 12px;
-    }
-    #hint > div {
-      background: rgba(0,0,0,.25);
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 999px;
-      padding: 8px 12px;
-      backdrop-filter: blur(8px);
+    :root{
+      --bg:#0b1020;
+      --panel:#121933;
+      --panel-2:#1a2242;
+      --soft:#202a52;
+      --text:#eef3ff;
+      --muted:#a9b5d6;
+      --line:rgba(255,255,255,.08);
+      --ok:#1ea672;
+      --bad:#d64545;
+      --warn:#d0a93e;
+      --accent:#5f8cff;
+      --accent-2:#7a5cff;
+      --shadow:0 12px 35px rgba(0,0,0,.28);
+      --radius:20px;
     }
 
-    #loading {
-      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: rgba(255,255,255,.75);
-      pointer-events:none;
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:linear-gradient(180deg,#09101d,#0e1430 35%,#121933 100%);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+    body{min-height:100vh}
+    a{color:inherit}
+    button,input,select,textarea{font:inherit}
+    .app{max-width:1400px;margin:0 auto;padding:20px}
+    .topbar{
+      display:flex;gap:14px;align-items:center;justify-content:space-between;
+      margin-bottom:18px;flex-wrap:wrap
     }
-    #loading.hidden { display:none; }
+    .brand{
+      display:flex;align-items:center;gap:12px
+    }
+    .logo{
+      width:46px;height:46px;border-radius:14px;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      display:grid;place-items:center;font-weight:800;box-shadow:var(--shadow)
+    }
+    .brand h1{margin:0;font-size:1.2rem}
+    .brand p{margin:2px 0 0;color:var(--muted);font-size:.92rem}
+    .top-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+    .btn{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg,#1a2450,#162046);
+      color:var(--text);
+      padding:11px 15px;border-radius:14px;cursor:pointer;
+      transition:.18s ease;box-shadow:var(--shadow)
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none}
+    .btn.ok{background:linear-gradient(135deg,#168f63,#25bb84);border:none}
+    .btn.bad{background:linear-gradient(135deg,#b83737,#e04c4c);border:none}
+    .btn.warn{background:linear-gradient(135deg,#ae8830,#d8b44c);border:none;color:#151515}
+    .btn.ghost{background:transparent}
+    .btn.small{padding:8px 11px;border-radius:12px;font-size:.92rem}
+
+    .grid{
+      display:grid;
+      grid-template-columns:320px 1fr;
+      gap:18px;
+    }
+
+    .panel{
+      background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden
+    }
+    .panel-header{
+      padding:16px 18px;
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:center;justify-content:space-between;gap:10px
+    }
+    .panel-header h2,.panel-header h3{margin:0;font-size:1rem}
+    .panel-body{padding:16px 18px}
+
+    .sidebar .nav{
+      display:grid;gap:10px
+    }
+    .nav-btn{
+      text-align:left;
+      padding:14px 15px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg,#19234a,#131c3d);
+      color:var(--text);
+      cursor:pointer
+    }
+    .nav-btn.active{
+      outline:2px solid rgba(95,140,255,.45);
+      background:linear-gradient(180deg,#243162,#1a234a)
+    }
+    .nav-btn .sub{display:block;margin-top:4px;color:var(--muted);font-size:.9rem}
+
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:14px
+    }
+    .stat{
+      background:linear-gradient(180deg,#172147,#131b39);
+      border:1px solid var(--line);
+      border-radius:18px;padding:16px
+    }
+    .stat .label{color:var(--muted);font-size:.9rem}
+    .stat .value{font-size:1.7rem;font-weight:800;margin-top:8px}
+    .stat .mini{margin-top:6px;font-size:.88rem;color:var(--muted)}
+
+    .cards-2{
+      display:grid;grid-template-columns:1.3fr .9fr;gap:18px
+    }
+
+    .question-card{
+      padding:22px;border-radius:22px;
+      background:linear-gradient(180deg,#18224a,#121934);
+      border:1px solid var(--line)
+    }
+    .question-top{
+      display:flex;gap:10px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap
+    }
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:7px 11px;border-radius:999px;
+      background:#0f1733;border:1px solid var(--line);color:var(--muted);font-size:.9rem
+    }
+    .question-text{
+      margin:18px 0 14px;font-size:1.28rem;line-height:1.55;font-weight:700
+    }
+    .option-list{display:grid;gap:12px;margin-top:14px}
+    .option{
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px 15px;
+      background:linear-gradient(180deg,#141d3e,#101733);
+      cursor:pointer;
+      transition:.18s ease
+    }
+    .option:hover{transform:translateY(-1px);filter:brightness(1.04)}
+    .option.selected{outline:2px solid rgba(95,140,255,.55)}
+    .option.correct{border-color:rgba(30,166,114,.5);background:rgba(30,166,114,.12)}
+    .option.wrong{border-color:rgba(214,69,69,.5);background:rgba(214,69,69,.12)}
+
+    .question-media{
+      margin-top:14px;
+      display:none
+    }
+    .question-media img{
+      width:100%;max-height:280px;object-fit:cover;border-radius:18px;border:1px solid var(--line)
+    }
+
+    .meta-grid{
+      display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px
+    }
+    .meta-box{
+      background:linear-gradient(180deg,#172147,#131b39);
+      border:1px solid var(--line);border-radius:16px;padding:14px
+    }
+    .meta-box label{
+      display:block;color:var(--muted);font-size:.88rem;margin-bottom:6px
+    }
+    .meta-box .strong{font-weight:700}
+
+    .analysis{
+      display:grid;gap:12px
+    }
+    .analysis-card{
+      border:1px solid var(--line);
+      border-radius:16px;padding:14px;
+      background:linear-gradient(180deg,#172147,#121a36)
+    }
+    .analysis-card h4{margin:0 0 8px;font-size:.98rem}
+    .analysis-card p{margin:0;color:#dfe8ff;line-height:1.6}
+    .muted{color:var(--muted)}
+    .tag-list{display:flex;gap:8px;flex-wrap:wrap}
+    .tag{
+      padding:7px 10px;border-radius:999px;
+      background:#0f1733;border:1px solid var(--line);font-size:.88rem;color:#dbe4ff
+    }
+
+    .table-wrap{overflow:auto}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+    th{color:var(--muted);font-weight:600;font-size:.92rem}
+    td{font-size:.95rem}
+    .status{
+      display:inline-block;padding:6px 10px;border-radius:999px;font-size:.85rem;font-weight:700
+    }
+    .status.ok{background:rgba(30,166,114,.16);color:#7df2c3}
+    .status.bad{background:rgba(214,69,69,.16);color:#ffb0b0}
+    .status.wait{background:rgba(208,169,62,.15);color:#f5d98a}
+
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .full{grid-column:1 / -1}
+    .field{display:grid;gap:7px}
+    .field label{color:var(--muted);font-size:.92rem}
+    .input,.textarea,.select{
+      width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);
+      background:#0f1733;color:var(--text);outline:none
+    }
+    .textarea{min-height:110px;resize:vertical}
+    .hint{font-size:.86rem;color:var(--muted)}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .right{justify-content:flex-end}
+    .space{height:16px}
+
+    .hidden{display:none!important}
+    .section{display:none}
+    .section.active{display:block}
+
+    .progress{
+      width:100%;height:12px;border-radius:999px;background:#0f1733;border:1px solid var(--line);overflow:hidden
+    }
+    .progress > span{
+      display:block;height:100%;
+      background:linear-gradient(90deg,var(--accent),var(--accent-2));
+      width:0%
+    }
+
+    .empty{
+      padding:18px;border:1px dashed var(--line);border-radius:16px;color:var(--muted);text-align:center
+    }
+
+    .footer-note{
+      margin-top:18px;color:var(--muted);font-size:.9rem;line-height:1.6
+    }
+
+    @media (max-width:1100px){
+      .grid{grid-template-columns:1fr}
+      .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .cards-2{grid-template-columns:1fr}
+    }
+    @media (max-width:720px){
+      .stats{grid-template-columns:1fr}
+      .form-grid{grid-template-columns:1fr}
+      .question-text{font-size:1.12rem}
+      .app{padding:14px}
+    }
   </style>
 </head>
 <body>
-  <div id="app">
-    <div id="hud">
-      <div id="countBox">
-        <div id="countLabel">SoldierCount</div>
-        <div id="countValue">10</div>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">EK</div>
+        <div>
+          <h1>Ehliyet Kart Sistemi</h1>
+          <p>Türkçe destekli kişisel çalışma paneli</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="btn small" id="btnLoadDemo">Örnek verileri yükle</button>
+        <button class="btn small" id="btnExport">Yedeği dışa aktar</button>
+        <label class="btn small" for="importFile">Yedek içe aktar</label>
+        <input id="importFile" type="file" accept=".json" class="hidden" />
+        <button class="btn small bad" id="btnReset">Sıfırla</button>
       </div>
     </div>
-    <div id="hint"><div>Drag/Swipe ile sağa-sola hareket ✋</div></div>
-    <div id="loading">Yükleniyor…</div>
+
+    <div class="grid">
+      <aside class="sidebar panel">
+        <div class="panel-header">
+          <h2>Menü</h2>
+        </div>
+        <div class="panel-body">
+          <div class="nav">
+            <button class="nav-btn active" data-section="dashboard">
+              Gösterge Paneli
+              <span class="sub">İlerleme, tekrar ve özet</span>
+            </button>
+            <button class="nav-btn" data-section="study">
+              Kartlarla Çalış
+              <span class="sub">Soru çöz, analiz gör</span>
+            </button>
+            <button class="nav-btn" data-section="wrong">
+              Yanlışlarım
+              <span class="sub">Hatalı sorular ve nedenleri</span>
+            </button>
+            <button class="nav-btn" data-section="review">
+              Tekrar Planı
+              <span class="sub">1, 3, 7, 14 gün döngüsü</span>
+            </button>
+            <button class="nav-btn" data-section="data">
+              Veri ve API
+              <span class="sub">JSON içe aktar, endpoint bağla</span>
+            </button>
+            <button class="nav-btn" data-section="manual">
+              Manuel Kayıt
+              <span class="sub">Soru ekle veya düzenle</span>
+            </button>
+            <button class="nav-btn" data-section="settings">
+              Ayarlar
+              <span class="sub">Dil, çalışma ve AI ayarları</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <main>
+        <section class="section active" id="section-dashboard">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Genel Durum</h2>
+              <div class="row">
+                <button class="btn small primary" id="quickStartStudy">Çalışmaya başla</button>
+                <button class="btn small" id="quickReview">Tekrarları aç</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="stats">
+                <div class="stat">
+                  <div class="label">Toplam soru</div>
+                  <div class="value" id="statTotal">0</div>
+                  <div class="mini">Veri havuzundaki kayıt sayısı</div>
+                </div>
+                <div class="stat">
+                  <div class="label">Çözülen</div>
+                  <div class="value" id="statSolved">0</div>
+                  <div class="mini">En az 1 kez cevaplanan</div>
+                </div>
+                <div class="stat">
+                  <div class="label">Doğru oranı</div>
+                  <div class="value" id="statAccuracy">0%</div>
+                  <div class="mini">Tüm denemelerin ortalaması</div>
+                </div>
+                <div class="stat">
+                  <div class="label">Bugün tekrar</div>
+                  <div class="value" id="statDue">0</div>
+                  <div class="mini">Tarihi gelen kart sayısı</div>
+                </div>
+              </div>
+
+              <div class="space"></div>
+
+              <div class="cards-2">
+                <div class="panel" style="background:transparent">
+                  <div class="panel-header">
+                    <h3>İlerleme</h3>
+                  </div>
+                  <div class="panel-body">
+                    <div class="muted" style="margin-bottom:8px">Çözülme oranı</div>
+                    <div class="progress"><span id="progressSolved"></span></div>
+                    <div class="space"></div>
+                    <div class="muted" style="margin-bottom:8px">Doğru cevap oranı</div>
+                    <div class="progress"><span id="progressAccuracy"></span></div>
+                    <div class="footer-note">
+                      Sistem, yanlış yaptığın soruları ayrı listeler. Tekrar tarihi gelenleri sana yeniden gösterir.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="panel" style="background:transparent">
+                  <div class="panel-header">
+                    <h3>En zayıf konular</h3>
+                  </div>
+                  <div class="panel-body">
+                    <div id="weakTopicsBox" class="empty">Henüz veri yok</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space"></div>
+
+              <div class="panel" style="background:transparent">
+                <div class="panel-header">
+                  <h3>Son aktiviteler</h3>
+                </div>
+                <div class="panel-body">
+                  <div id="recentActivity" class="empty">Henüz aktivite yok</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="section-study">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Kartlarla Çalış</h2>
+              <div class="row">
+                <button class="btn small" id="btnPrevQuestion">Önceki</button>
+                <button class="btn small" id="btnNextQuestion">Sonraki</button>
+                <button class="btn small warn" id="btnRandomQuestion">Rastgele</button>
+                <button class="btn small primary" id="btnStudyDueOnly">Sadece tekrarlar</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="cards-2">
+                <div class="question-card">
+                  <div class="question-top">
+                    <div class="row">
+                      <span class="pill" id="qCode">Kod: -</span>
+                      <span class="pill" id="qTopic">Konu: -</span>
+                      <span class="pill" id="qLang">Dil: Türkçe</span>
+                    </div>
+                    <div class="row">
+                      <span class="pill" id="qIndexInfo">0 / 0</span>
+                    </div>
+                  </div>
+
+                  <div class="question-text" id="questionText">Yüklenecek soru bekleniyor.</div>
+
+                  <div class="question-media" id="questionMediaWrap">
+                    <img id="questionMedia" alt="Soru görseli" />
+                  </div>
+
+                  <div class="option-list" id="optionList"></div>
+
+                  <div class="space"></div>
+
+                  <div class="row">
+                    <button class="btn ok" id="btnSubmitAnswer">Cevabı kontrol et</button>
+                    <button class="btn" id="btnShowAnswer">Doğru cevabı göster</button>
+                    <button class="btn" id="btnMarkHard">Zor soru olarak işaretle</button>
+                    <button class="btn ghost" id="btnClearChoice">Seçimi temizle</button>
+                  </div>
+                </div>
+
+                <div class="panel" style="background:transparent">
+                  <div class="panel-header">
+                    <h3>Analiz Kartı</h3>
+                  </div>
+                  <div class="panel-body">
+                    <div class="analysis">
+                      <div class="analysis-card">
+                        <h4>Sonuç</h4>
+                        <p id="analysisResult">Henüz cevap verilmedi.</p>
+                      </div>
+                      <div class="analysis-card">
+                        <h4>Neden doğru?</h4>
+                        <p id="analysisWhyCorrect">Cevap sonrası burada görünür.</p>
+                      </div>
+                      <div class="analysis-card">
+                        <h4>Neden yanlış yaptım?</h4>
+                        <p id="analysisWhyWrong">Yanlış cevap verdiğinde burada açıklanır.</p>
+                      </div>
+                      <div class="analysis-card">
+                        <h4>Kısa hafıza ipucu</h4>
+                        <p id="analysisMemoryTip">AI ya da yerel açıklama burada görünür.</p>
+                      </div>
+                      <div class="analysis-card">
+                        <h4>Etiketler</h4>
+                        <div class="tag-list" id="analysisTags">
+                          <span class="tag">etiket yok</span>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <button class="btn small primary" id="btnAskAI">AI ile analiz et</button>
+                        <button class="btn small" id="btnSaveManualAnalysis">Bu analizi kaydet</button>
+                      </div>
+                      <div class="hint">AI için ayarlarda belirttiğin backend endpoint kullanılır.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space"></div>
+
+              <div class="panel" style="background:transparent">
+                <div class="panel-header">
+                  <h3>Soru bilgisi</h3>
+                </div>
+                <div class="panel-body">
+                  <div class="meta-grid">
+                    <div class="meta-box">
+                      <label>Alt konu</label>
+                      <div class="strong" id="qSubtopic">-</div>
+                    </div>
+                    <div class="meta-box">
+                      <label>Çözüm geçmişi</label>
+                      <div class="strong" id="qHistory">Henüz çözülmedi</div>
+                    </div>
+                    <div class="meta-box">
+                      <label>Sonraki tekrar tarihi</label>
+                      <div class="strong" id="qNextReview">-</div>
+                    </div>
+                    <div class="meta-box">
+                      <label>Zorluk durumu</label>
+                      <div class="strong" id="qHardState">Normal</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="section-wrong">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Yanlışlarım</h2>
+              <div class="row">
+                <button class="btn small" id="btnRefreshWrong">Yenile</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Kod</th>
+                      <th>Konu</th>
+                      <th>Soru</th>
+                      <th>Durum</th>
+                      <th>Son hata</th>
+                      <th>İşlem</th>
+                    </tr>
+                  </thead>
+                  <tbody id="wrongTableBody"></tbody>
+                </table>
+              </div>
+              <div id="wrongEmpty" class="empty">Yanlış kayıt bulunamadı</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="section-review">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Tekrar Planı</h2>
+              <div class="row">
+                <button class="btn small primary" id="btnStartReview">Tekrara başla</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Kod</th>
+                      <th>Konu</th>
+                      <th>Sonuç</th>
+                      <th>Sonraki tekrar</th>
+                      <th>Aşama</th>
+                      <th>İşlem</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reviewTableBody"></tbody>
+                </table>
+              </div>
+              <div id="reviewEmpty" class="empty">Tekrar bekleyen soru yok</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="section-data">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Veri ve API</h2>
+            </div>
+            <div class="panel-body">
+              <div class="form-grid">
+                <div class="field">
+                  <label>Soru endpoint</label>
+                  <input class="input" id="apiQuestionsUrl" placeholder="/api/questions" />
+                  <div class="hint">Örnek: /api/questions veya https://site.com/api/questions</div>
+                </div>
+                <div class="field">
+                  <label>AI analiz endpoint</label>
+                  <input class="input" id="apiAnalyzeUrl" placeholder="/api/analyze" />
+                  <div class="hint">Örnek: /api/analyze</div>
+                </div>
+                <div class="field full">
+                  <label>JSON veri içe aktar</label>
+                  <textarea class="textarea" id="jsonImportArea" placeholder='[{"id":"1","code":"1.2.3","topic":"Vorfahrt","question_tr":"...","options_tr":["..."],"correctIndex":1}]'></textarea>
+                </div>
+                <div class="field full">
+                  <div class="row">
+                    <button class="btn primary" id="btnImportJsonText">Metinden içe aktar</button>
+                    <button class="btn" id="btnFetchQuestions">API’den soruları çek</button>
+                    <button class="btn" id="btnSaveApiSettings">Endpointleri kaydet</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space"></div>
+
+              <div class="panel" style="background:transparent">
+                <div class="panel-header">
+                  <h3>Beklenen soru formatı</h3>
+                </div>
+                <div class="panel-body">
+<pre style="white-space:pre-wrap;line-height:1.6;margin:0;color:#dfe8ff">[
+  {
+    "id": "q1",
+    "code": "1.2.01-001",
+    "topic": "Geçiş önceliği",
+    "subtopic": "Kavşak",
+    "lang": "tr",
+    "question_tr": "Bu kavşakta önce hangi araç geçmelidir?",
+    "question_de": "Welches Fahrzeug darf zuerst fahren?",
+    "options_tr": ["Kırmızı araç", "Mavi araç", "Yaya", "Sarı araç"],
+    "options_de": ["Rotes Auto", "Blaues Auto", "Fußgänger", "Gelbes Auto"],
+    "correctIndex": 1,
+    "image": "",
+    "explanation_tr": "Bu soruda öncelik kuralı uygulanır.",
+    "explanation_de": "Hier gilt die Vorfahrtsregel.",
+    "memory_tip_tr": "İşareti ve sağdan geleni birlikte düşün.",
+    "tags": ["Vorfahrt","Kavşak"]
+  }
+]</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="section-manual">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Manuel Soru Kaydı</h2>
+            </div>
+            <div class="panel-body">
+              <div class="form-grid">
+                <div class="field">
+                  <label>ID</label>
+                  <input class="input" id="mId" placeholder="q-001" />
+                </div>
+                <div class="field">
+                  <label>Kod</label>
+                  <input class="input" id="mCode" placeholder="1.2.01-001" />
+                </div>
+                <div class="field">
+                  <label>Konu</label>
+                  <input class="input" id="mTopic" placeholder="Geçiş önceliği" />
+                </div>
+                <div class="field">
+                  <label>Alt konu</label>
+                  <input class="input" id="mSubtopic" placeholder="Kavşak" />
+                </div>
+                <div class="field full">
+                  <label>Soru Türkçe</label>
+                  <textarea class="textarea" id="mQuestionTr" placeholder="Soruyu Türkçe yaz"></textarea>
+                </div>
+                <div class="field full">
+                  <label>Soru Almanca</label>
+                  <textarea class="textarea" id="mQuestionDe" placeholder="Soruyu Almanca yaz"></textarea>
+                </div>
+                <div class="field">
+                  <label>Şık 1</label>
+                  <input class="input" id="mOpt1" />
+                </div>
+                <div class="field">
+                  <label>Şık 2</label>
+                  <input class="input" id="mOpt2" />
+                </div>
+                <div class="field">
+                  <label>Şık 3</label>
+                  <input class="input" id="mOpt3" />
+                </div>
+                <div class="field">
+                  <label>Şık 4</label>
+                  <input class="input" id="mOpt4" />
+                </div>
+                <div class="field">
+                  <label>Doğru şık index</label>
+                  <select class="select" id="mCorrectIndex">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Görsel URL</label>
+                  <input class="input" id="mImage" placeholder="https://..." />
+                </div>
+                <div class="field full">
+                  <label>Türkçe açıklama</label>
+                  <textarea class="textarea" id="mExplanationTr"></textarea>
+                </div>
+                <div class="field full">
+                  <label>Hafıza ipucu</label>
+                  <textarea class="textarea" id="mMemoryTip"></textarea>
+                </div>
+                <div class="field full">
+                  <label>Etiketler</label>
+                  <input class="input" id="mTags" placeholder="Vorfahrt, Kavşak, İşaret" />
+                </div>
+                <div class="field full">
+                  <div class="row">
+                    <button class="btn primary" id="btnAddManualQuestion">Soruyu kaydet</button>
+                    <button class="btn" id="btnFillManualFromCurrent">Mevcut soruyu forma getir</button>
+                    <button class="btn" id="btnClearManual">Formu temizle</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="section-settings">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Ayarlar</h2>
+            </div>
+            <div class="panel-body">
+              <div class="form-grid">
+                <div class="field">
+                  <label>Görüntü dili</label>
+                  <select class="select" id="settingLanguage">
+                    <option value="tr">Türkçe</option>
+                    <option value="de">Almanca</option>
+                    <option value="dual">Çift dil</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Çalışma modu</label>
+                  <select class="select" id="settingStudyMode">
+                    <option value="all">Tüm sorular</option>
+                    <option value="wrong">Sadece yanlışlar</option>
+                    <option value="hard">Sadece zor sorular</option>
+                    <option value="due">Sadece tekrarı gelenler</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Tekrar günleri</label>
+                  <input class="input" id="settingIntervals" placeholder="1,3,7,14" />
+                  <div class="hint">Virgülle ayır. Örnek: 1,3,7,14</div>
+                </div>
+                <div class="field">
+                  <label>AI otomatik analiz</label>
+                  <select class="select" id="settingAutoAI">
+                    <option value="false">Kapalı</option>
+                    <option value="true">Açık</option>
+                  </select>
+                </div>
+                <div class="field full">
+                  <div class="row">
+                    <button class="btn primary" id="btnSaveSettings">Ayarları kaydet</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="footer-note">
+                Bu HTML dosyası kişisel çalışma paneli mantığıyla hazırlanmıştır. Gizli anahtarlar frontende yazılmamalıdır. AI ve veri çekme için kendi backend endpoint kullanman gerekir.
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
   </div>
 
-  <!-- Single-file build: bundle.js (modules bundled) -->
-  <script type="module" src="./bundle.js"></script>
+  <script>
+    const STORAGE_KEYS = {
+      questions: "ehliyet_questions_v1",
+      progress: "ehliyet_progress_v1",
+      settings: "ehliyet_settings_v1",
+      activity: "ehliyet_activity_v1",
+      api: "ehliyet_api_v1"
+    };
+
+    const DEMO_QUESTIONS = [
+      {
+        id: "q1",
+        code: "1.2.01-001",
+        topic: "Geçiş önceliği",
+        subtopic: "Kavşak",
+        lang: "tr",
+        question_tr: "İşaretsiz bir kavşakta hangi araç önce geçer?",
+        question_de: "Welches Fahrzeug darf an einer Kreuzung ohne Verkehrszeichen zuerst fahren?",
+        options_tr: ["Soldan gelen araç", "Sağdan gelen araç", "En büyük araç", "En hızlı araç"],
+        options_de: ["Das von links kommende Fahrzeug", "Das von rechts kommende Fahrzeug", "Das größte Fahrzeug", "Das schnellste Fahrzeug"],
+        correctIndex: 1,
+        image: "",
+        explanation_tr: "İşaretsiz kavşakta temel kural sağdan gelenin önceliğidir.",
+        explanation_de: "An einer Kreuzung ohne Verkehrszeichen gilt rechts vor links.",
+        memory_tip_tr: "İşaret yoksa önce sağa bak.",
+        tags: ["Vorfahrt","Kavşak","Sağdan gelen"]
+      },
+      {
+        id: "q2",
+        code: "1.2.02-004",
+        topic: "Durma mesafesi",
+        subtopic: "Fren",
+        lang: "tr",
+        question_tr: "Islak zeminde fren mesafesi nasıl değişir?",
+        question_de: "Wie verändert sich der Bremsweg auf nasser Fahrbahn?",
+        options_tr: ["Kısalır", "Değişmez", "Uzar", "Sadece gece uzar"],
+        options_de: ["Er wird kürzer", "Er bleibt gleich", "Er wird länger", "Er wird nur nachts länger"],
+        correctIndex: 2,
+        image: "",
+        explanation_tr: "Zemin ıslak olduğunda lastik ile yol arasındaki tutuş azalır ve fren mesafesi uzar.",
+        explanation_de: "Bei nasser Fahrbahn verringert sich die Haftung und der Bremsweg wird länger.",
+        memory_tip_tr: "Islak yol, daha az tutuş, daha uzun duruş.",
+        tags: ["Bremsweg","Islak zemin","Fren"]
+      },
+      {
+        id: "q3",
+        code: "1.2.03-002",
+        topic: "Yaya geçidi",
+        subtopic: "Yaya güvenliği",
+        lang: "tr",
+        question_tr: "Yaya geçidine yaklaşırken ne yapmalısınız?",
+        question_de: "Wie verhalten Sie sich beim Heranfahren an einen Fußgängerüberweg?",
+        options_tr: ["Hızlanırım", "Sollamaya başlarım", "Hazır olur ve yavaşlarım", "Kornaya basarım"],
+        options_de: ["Ich beschleunige", "Ich beginne zu überholen", "Ich bin bremsbereit und fahre langsamer", "Ich hupe"],
+        correctIndex: 2,
+        image: "",
+        explanation_tr: "Yaya geçidine yaklaşırken yayayı korumak için yavaşlamalı ve frene hazır olmalısın.",
+        explanation_de: "Sie müssen langsam fahren und bremsbereit sein.",
+        memory_tip_tr: "Yaya geçidi görünce hız değil dikkat artar.",
+        tags: ["Fußgänger","Yaya geçidi","Güvenlik"]
+      }
+    ];
+
+    let state = {
+      questions: [],
+      progress: {},
+      activity: [],
+      settings: {
+        language: "tr",
+        studyMode: "all",
+        intervals: [1,3,7,14],
+        autoAI: false
+      },
+      api: {
+        questionsUrl: "/api/questions",
+        analyzeUrl: "/api/analyze"
+      },
+      currentIndex: 0,
+      selectedOption: null,
+      onlyDueMode: false
+    };
+
+    function saveState(){
+      localStorage.setItem(STORAGE_KEYS.questions, JSON.stringify(state.questions));
+      localStorage.setItem(STORAGE_KEYS.progress, JSON.stringify(state.progress));
+      localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(state.settings));
+      localStorage.setItem(STORAGE_KEYS.activity, JSON.stringify(state.activity));
+      localStorage.setItem(STORAGE_KEYS.api, JSON.stringify(state.api));
+    }
+
+    function loadState(){
+      const questions = safeParse(localStorage.getItem(STORAGE_KEYS.questions), []);
+      const progress = safeParse(localStorage.getItem(STORAGE_KEYS.progress), {});
+      const settings = safeParse(localStorage.getItem(STORAGE_KEYS.settings), null);
+      const activity = safeParse(localStorage.getItem(STORAGE_KEYS.activity), []);
+      const api = safeParse(localStorage.getItem(STORAGE_KEYS.api), null);
+
+      state.questions = Array.isArray(questions) ? questions : [];
+      state.progress = progress || {};
+      state.activity = Array.isArray(activity) ? activity : [];
+
+      if(settings){
+        state.settings = {
+          ...state.settings,
+          ...settings
+        };
+      }
+
+      if(api){
+        state.api = {
+          ...state.api,
+          ...api
+        };
+      }
+    }
+
+    function safeParse(raw, fallback){
+      try{
+        return raw ? JSON.parse(raw) : fallback;
+      }catch(e){
+        return fallback;
+      }
+    }
+
+    function todayStr(){
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function addDays(dateStr, days){
+      const d = new Date(dateStr + "T00:00:00");
+      d.setDate(d.getDate() + days);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function getQuestionProgress(id){
+      if(!state.progress[id]){
+        state.progress[id] = {
+          attempts: 0,
+          correct: 0,
+          wrong: 0,
+          lastSelected: null,
+          lastResult: null,
+          lastAttemptAt: null,
+          wrongReason: "",
+          aiAnalysis: null,
+          reviewStage: 0,
+          nextReview: null,
+          hard: false
+        };
+      }
+      return state.progress[id];
+    }
+
+    function getCurrentQuestionSet(){
+      let list = [...state.questions];
+      const mode = state.onlyDueMode ? "due" : state.settings.studyMode;
+
+      if(mode === "wrong"){
+        list = list.filter(q => getQuestionProgress(q.id).wrong > 0);
+      } else if(mode === "hard"){
+        list = list.filter(q => getQuestionProgress(q.id).hard);
+      } else if(mode === "due"){
+        const t = todayStr();
+        list = list.filter(q => {
+          const p = getQuestionProgress(q.id);
+          return p.nextReview && p.nextReview <= t;
+        });
+      }
+
+      return list;
+    }
+
+    function getCurrentQuestion(){
+      const set = getCurrentQuestionSet();
+      if(set.length === 0) return null;
+      if(state.currentIndex >= set.length) state.currentIndex = 0;
+      if(state.currentIndex < 0) state.currentIndex = 0;
+      return set[state.currentIndex];
+    }
+
+    function displayQuestion(){
+      const q = getCurrentQuestion();
+      const set = getCurrentQuestionSet();
+
+      const qText = document.getElementById("questionText");
+      const qCode = document.getElementById("qCode");
+      const qTopic = document.getElementById("qTopic");
+      const qLang = document.getElementById("qLang");
+      const qIndexInfo = document.getElementById("qIndexInfo");
+      const qSubtopic = document.getElementById("qSubtopic");
+      const qHistory = document.getElementById("qHistory");
+      const qNextReview = document.getElementById("qNextReview");
+      const qHardState = document.getElementById("qHardState");
+      const optionList = document.getElementById("optionList");
+      const mediaWrap = document.getElementById("questionMediaWrap");
+      const media = document.getElementById("questionMedia");
+
+      clearAnalysisView();
+
+      if(!q){
+        qText.textContent = "Gösterilecek soru yok. Veri yükle veya çalışma modunu değiştir.";
+        qCode.textContent = "Kod: -";
+        qTopic.textContent = "Konu: -";
+        qLang.textContent = "Dil: -";
+        qIndexInfo.textContent = "0 / 0";
+        qSubtopic.textContent = "-";
+        qHistory.textContent = "Henüz çözülmedi";
+        qNextReview.textContent = "-";
+        qHardState.textContent = "-";
+        optionList.innerHTML = "";
+        mediaWrap.style.display = "none";
+        return;
+      }
+
+      const langMode = state.settings.language;
+      let text = q.question_tr || q.question_de || "";
+      if(langMode === "de") text = q.question_de || q.question_tr || "";
+      if(langMode === "dual"){
+        text = (q.question_de || "") + (q.question_tr ? "<br><br><span class='muted' style='font-weight:500'>" + escapeHtml(q.question_tr) + "</span>" : "");
+        qText.innerHTML = text;
+      } else {
+        qText.textContent = text;
+      }
+
+      qCode.textContent = "Kod: " + (q.code || "-");
+      qTopic.textContent = "Konu: " + (q.topic || "-");
+      qLang.textContent = "Dil: " + (langMode === "tr" ? "Türkçe" : langMode === "de" ? "Almanca" : "Çift dil");
+      qIndexInfo.textContent = (set.length ? state.currentIndex + 1 : 0) + " / " + set.length;
+      qSubtopic.textContent = q.subtopic || "-";
+
+      const p = getQuestionProgress(q.id);
+      qHistory.textContent = p.attempts ? `${p.attempts} deneme | ${p.correct} doğru | ${p.wrong} yanlış` : "Henüz çözülmedi";
+      qNextReview.textContent = p.nextReview || "-";
+      qHardState.textContent = p.hard ? "Zor soru" : "Normal";
+
+      if(q.image){
+        media.src = q.image;
+        mediaWrap.style.display = "block";
+      } else {
+        mediaWrap.style.display = "none";
+      }
+
+      optionList.innerHTML = "";
+      state.selectedOption = null;
+
+      const opts = langMode === "de"
+        ? (q.options_de || q.options_tr || [])
+        : langMode === "dual"
+          ? (q.options_de || q.options_tr || []).map((de, i) => `${de}<br><span class="muted">${escapeHtml((q.options_tr || [])[i] || "")}</span>`)
+          : (q.options_tr || q.options_de || []);
+
+      opts.forEach((opt, i) => {
+        const div = document.createElement("div");
+        div.className = "option";
+        div.dataset.index = i;
+        if(langMode === "dual"){
+          div.innerHTML = `<strong>${String.fromCharCode(65+i)}.</strong> ${opt}`;
+        } else {
+          div.textContent = `${String.fromCharCode(65+i)}. ${opt}`;
+        }
+        div.addEventListener("click", () => {
+          document.querySelectorAll(".option").forEach(x => x.classList.remove("selected"));
+          div.classList.add("selected");
+          state.selectedOption = i;
+        });
+        optionList.appendChild(div);
+      });
+
+      showSavedAnalysisIfAny(q);
+    }
+
+    function clearAnalysisView(){
+      document.getElementById("analysisResult").textContent = "Henüz cevap verilmedi.";
+      document.getElementById("analysisWhyCorrect").textContent = "Cevap sonrası burada görünür.";
+      document.getElementById("analysisWhyWrong").textContent = "Yanlış cevap verdiğinde burada açıklanır.";
+      document.getElementById("analysisMemoryTip").textContent = "AI ya da yerel açıklama burada görünür.";
+      document.getElementById("analysisTags").innerHTML = `<span class="tag">etiket yok</span>`;
+    }
+
+    function showSavedAnalysisIfAny(q){
+      const p = getQuestionProgress(q.id);
+      if(p.aiAnalysis){
+        renderAnalysis({
+          result: p.lastResult === true ? "Daha önce doğru cevaplandı." : p.lastResult === false ? "Daha önce yanlış cevaplandı." : "Kayıt var.",
+          whyCorrect: p.aiAnalysis.whyCorrect || q.explanation_tr || "Kayıtlı açıklama yok.",
+          whyWrong: p.aiAnalysis.whyWrong || p.wrongReason || "Kayıtlı hata açıklaması yok.",
+          memoryTip: p.aiAnalysis.memoryTip || q.memory_tip_tr || "Kısa ipucu yok.",
+          tags: p.aiAnalysis.tags || q.tags || []
+        });
+      }
+    }
+
+    function renderAnalysis(data){
+      document.getElementById("analysisResult").textContent = data.result || "-";
+      document.getElementById("analysisWhyCorrect").textContent = data.whyCorrect || "-";
+      document.getElementById("analysisWhyWrong").textContent = data.whyWrong || "-";
+      document.getElementById("analysisMemoryTip").textContent = data.memoryTip || "-";
+
+      const tags = Array.isArray(data.tags) ? data.tags : [];
+      const box = document.getElementById("analysisTags");
+      box.innerHTML = tags.length ? tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("") : `<span class="tag">etiket yok</span>`;
+    }
+
+    function submitAnswer(showOnly=false){
+      const q = getCurrentQuestion();
+      if(!q) return;
+
+      if(state.selectedOption == null && !showOnly){
+        alert("Lütfen bir şık seç.");
+        return;
+      }
+
+      const p = getQuestionProgress(q.id);
+      const selected = showOnly ? null : state.selectedOption;
+      const correct = q.correctIndex;
+      const isCorrect = selected === correct;
+
+      document.querySelectorAll(".option").forEach((el, i) => {
+        el.classList.remove("correct","wrong");
+        if(i === correct) el.classList.add("correct");
+        if(selected === i && selected !== correct) el.classList.add("wrong");
+      });
+
+      if(!showOnly){
+        p.attempts += 1;
+        p.lastSelected = selected;
+        p.lastResult = isCorrect;
+        p.lastAttemptAt = new Date().toISOString();
+
+        if(isCorrect){
+          p.correct += 1;
+          p.reviewStage = Math.min(p.reviewStage + 1, state.settings.intervals.length - 1);
+          const nextDays = state.settings.intervals[p.reviewStage] ?? state.settings.intervals[state.settings.intervals.length - 1] ?? 1;
+          p.nextReview = addDays(todayStr(), nextDays);
+          p.wrongReason = "";
+        } else {
+          p.wrong += 1;
+          p.reviewStage = 0;
+          p.nextReview = addDays(todayStr(), state.settings.intervals[0] || 1);
+          p.wrongReason = generateWrongReason(q, selected);
+        }
+
+        addActivity({
+          type: isCorrect ? "Doğru" : "Yanlış",
+          code: q.code,
+          topic: q.topic,
+          time: new Date().toLocaleString("tr-TR")
+        });
+
+        const whyCorrect = q.explanation_tr || "Bu soruda trafik kuralı doğru yorumlanmalıdır.";
+        const whyWrong = isCorrect ? "Bu kez hata yok." : p.wrongReason;
+        const memoryTip = q.memory_tip_tr || "Soruda işaret, öncelik ve güvenlik sırasını birlikte düşün.";
+
+        renderAnalysis({
+          result: isCorrect ? "Doğru cevap verdin." : `Yanlış cevap verdin. Doğru cevap ${String.fromCharCode(65 + correct)} şıkkı.`,
+          whyCorrect,
+          whyWrong,
+          memoryTip,
+          tags: q.tags || []
+        });
+
+        if(state.settings.autoAI){
+          askAIAnalysis();
+        }
+
+        saveState();
+        refreshAll();
+      } else {
+        renderAnalysis({
+          result: `Doğru cevap ${String.fromCharCode(65 + correct)} şıkkı.`,
+          whyCorrect: q.explanation_tr || "Açıklama yok.",
+          whyWrong: "Bu görünüm sadece doğru cevabı göstermek için açıldı.",
+          memoryTip: q.memory_tip_tr || "Kısa ipucu yok.",
+          tags: q.tags || []
+        });
+      }
+    }
+
+    function generateWrongReason(q, selected){
+      const selectedText = selected == null ? "Seçim yok" : ((q.options_tr || q.options_de || [])[selected] || "Bilinmiyor");
+      return `Seçtiğin şık: "${selectedText}". Bu soruda temel kural farklı uygulanıyor. Öncelik, güvenlik ve işaret sırasını birlikte düşünmelisin.`;
+    }
+
+    async function askAIAnalysis(){
+      const q = getCurrentQuestion();
+      if(!q) return;
+
+      const p = getQuestionProgress(q.id);
+      const analyzeUrl = state.api.analyzeUrl?.trim();
+      if(!analyzeUrl){
+        alert("AI analiz endpoint ayarlanmamış.");
+        return;
+      }
+
+      const payload = {
+        question: q.question_tr || q.question_de,
+        options: q.options_tr || q.options_de || [],
+        correctIndex: q.correctIndex,
+        userSelectedIndex: p.lastSelected,
+        topic: q.topic,
+        subtopic: q.subtopic,
+        language: "tr"
+      };
+
+      try{
+        const btn = document.getElementById("btnAskAI");
+        btn.disabled = true;
+        btn.textContent = "AI analiz ediyor...";
+
+        const res = await fetch(analyzeUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if(!res.ok){
+          throw new Error("AI endpoint hata verdi");
+        }
+
+        const data = await res.json();
+
+        p.aiAnalysis = {
+          whyCorrect: data.whyCorrect || q.explanation_tr || "",
+          whyWrong: data.whyWrong || p.wrongReason || "",
+          memoryTip: data.memoryTip || q.memory_tip_tr || "",
+          tags: data.tags || q.tags || []
+        };
+
+        renderAnalysis({
+          result: p.lastResult === true ? "Doğru cevap verdin." : "Yanlış cevap verdin.",
+          whyCorrect: p.aiAnalysis.whyCorrect,
+          whyWrong: p.aiAnalysis.whyWrong,
+          memoryTip: p.aiAnalysis.memoryTip,
+          tags: p.aiAnalysis.tags
+        });
+
+        saveState();
+        refreshAll();
+      }catch(err){
+        alert("AI analizi alınamadı. Endpoint veya backend kontrol et.");
+        console.error(err);
+      }finally{
+        const btn = document.getElementById("btnAskAI");
+        btn.disabled = false;
+        btn.textContent = "AI ile analiz et";
+      }
+    }
+
+    function addActivity(item){
+      state.activity.unshift(item);
+      state.activity = state.activity.slice(0, 20);
+    }
+
+    function renderDashboard(){
+      const total = state.questions.length;
+      const progressEntries = Object.values(state.progress);
+      const solved = progressEntries.filter(p => p.attempts > 0).length;
+      const totalAttempts = progressEntries.reduce((a,b)=>a+(b.attempts||0),0);
+      const totalCorrect = progressEntries.reduce((a,b)=>a+(b.correct||0),0);
+      const accuracy = totalAttempts ? Math.round((totalCorrect/totalAttempts)*100) : 0;
+      const due = state.questions.filter(q => {
+        const p = getQuestionProgress(q.id);
+        return p.nextReview && p.nextReview <= todayStr();
+      }).length;
+
+      document.getElementById("statTotal").textContent = total;
+      document.getElementById("statSolved").textContent = solved;
+      document.getElementById("statAccuracy").textContent = accuracy + "%";
+      document.getElementById("statDue").textContent = due;
+
+      document.getElementById("progressSolved").style.width = (total ? Math.round((solved/total)*100) : 0) + "%";
+      document.getElementById("progressAccuracy").style.width = accuracy + "%";
+
+      renderWeakTopics();
+      renderRecentActivity();
+    }
+
+    function renderWeakTopics(){
+      const map = {};
+      state.questions.forEach(q => {
+        const p = getQuestionProgress(q.id);
+        if(!map[q.topic]) map[q.topic] = {wrong:0, attempts:0};
+        map[q.topic].wrong += p.wrong || 0;
+        map[q.topic].attempts += p.attempts || 0;
+      });
+
+      const arr = Object.entries(map)
+        .map(([topic,val]) => ({
+          topic,
+          wrong: val.wrong,
+          attempts: val.attempts,
+          ratio: val.attempts ? Math.round((val.wrong/val.attempts)*100) : 0
+        }))
+        .filter(x => x.attempts > 0)
+        .sort((a,b)=>b.ratio-a.ratio)
+        .slice(0,5);
+
+      const box = document.getElementById("weakTopicsBox");
+      if(!arr.length){
+        box.className = "empty";
+        box.innerHTML = "Henüz yeterli çözüm verisi yok";
+        return;
+      }
+
+      box.className = "";
+      box.innerHTML = arr.map(item => `
+        <div class="analysis-card" style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+            <strong>${escapeHtml(item.topic)}</strong>
+            <span class="status bad">%${item.ratio} hata</span>
+          </div>
+          <div class="muted" style="margin-top:6px">${item.attempts} deneme, ${item.wrong} yanlış</div>
+        </div>
+      `).join("");
+    }
+
+    function renderRecentActivity(){
+      const box = document.getElementById("recentActivity");
+      if(!state.activity.length){
+        box.className = "empty";
+        box.innerHTML = "Henüz aktivite yok";
+        return;
+      }
+
+      box.className = "";
+      box.innerHTML = state.activity.map(a => `
+        <div class="analysis-card" style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+            <strong>${escapeHtml(a.code || "-")} | ${escapeHtml(a.topic || "-")}</strong>
+            <span class="status ${a.type === "Doğru" ? "ok" : "bad"}">${escapeHtml(a.type)}</span>
+          </div>
+          <div class="muted" style="margin-top:6px">${escapeHtml(a.time || "")}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderWrongTable(){
+      const tbody = document.getElementById("wrongTableBody");
+      const empty = document.getElementById("wrongEmpty");
+      const items = state.questions.filter(q => getQuestionProgress(q.id).wrong > 0);
+
+      tbody.innerHTML = "";
+
+      if(!items.length){
+        empty.style.display = "block";
+        return;
+      }
+
+      empty.style.display = "none";
+
+      items.forEach(q => {
+        const p = getQuestionProgress(q.id);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(q.code || "-")}</td>
+          <td>${escapeHtml(q.topic || "-")}</td>
+          <td>${escapeHtml((q.question_tr || q.question_de || "").slice(0,90))}${(q.question_tr || q.question_de || "").length > 90 ? "..." : ""}</td>
+          <td><span class="status bad">${p.wrong} yanlış</span></td>
+          <td>${escapeHtml(p.wrongReason || "-")}</td>
+          <td>
+            <button class="btn small" data-open="${q.id}">Aç</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll("[data-open]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          openQuestionById(btn.dataset.open);
+          switchSection("study");
+        });
+      });
+    }
+
+    function renderReviewTable(){
+      const tbody = document.getElementById("reviewTableBody");
+      const empty = document.getElementById("reviewEmpty");
+      const t = todayStr();
+
+      const items = state.questions
+        .map(q => ({q, p:getQuestionProgress(q.id)}))
+        .filter(x => x.p.nextReview)
+        .sort((a,b)=>(a.p.nextReview > b.p.nextReview ? 1 : -1));
+
+      tbody.innerHTML = "";
+
+      if(!items.length){
+        empty.style.display = "block";
+        return;
+      }
+
+      empty.style.display = "none";
+
+      items.forEach(({q,p}) => {
+        const due = p.nextReview <= t;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(q.code || "-")}</td>
+          <td>${escapeHtml(q.topic || "-")}</td>
+          <td><span class="status ${p.lastResult ? "ok" : "bad"}">${p.lastResult ? "Son cevap doğru" : "Son cevap yanlış"}</span></td>
+          <td><span class="status ${due ? "wait" : "ok"}">${escapeHtml(p.nextReview || "-")}</span></td>
+          <td>${p.reviewStage + 1}</td>
+          <td><button class="btn small" data-open="${q.id}">Aç</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll("[data-open]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          openQuestionById(btn.dataset.open);
+          switchSection("study");
+        });
+      });
+    }
+
+    function openQuestionById(id){
+      const set = getCurrentQuestionSet();
+      const idx = set.findIndex(q => q.id === id);
+      if(idx >= 0){
+        state.currentIndex = idx;
+      } else {
+        state.onlyDueMode = false;
+        state.settings.studyMode = "all";
+        const all = getCurrentQuestionSet();
+        const idxAll = all.findIndex(q => q.id === id);
+        state.currentIndex = idxAll >= 0 ? idxAll : 0;
+      }
+      displayQuestion();
+      saveState();
+    }
+
+    function refreshAll(){
+      renderDashboard();
+      displayQuestion();
+      renderWrongTable();
+      renderReviewTable();
+      syncSettingsUI();
+      syncApiUI();
+    }
+
+    function syncSettingsUI(){
+      document.getElementById("settingLanguage").value = state.settings.language;
+      document.getElementById("settingStudyMode").value = state.settings.studyMode;
+      document.getElementById("settingIntervals").value = state.settings.intervals.join(",");
+      document.getElementById("settingAutoAI").value = String(state.settings.autoAI);
+    }
+
+    function syncApiUI(){
+      document.getElementById("apiQuestionsUrl").value = state.api.questionsUrl || "";
+      document.getElementById("apiAnalyzeUrl").value = state.api.analyzeUrl || "";
+    }
+
+    function switchSection(name){
+      document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
+      document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
+      document.getElementById("section-" + name).classList.add("active");
+      document.querySelector(`.nav-btn[data-section="${name}"]`)?.classList.add("active");
+    }
+
+    function escapeHtml(str){
+      return String(str ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+
+    async function fetchQuestionsFromApi(){
+      const url = document.getElementById("apiQuestionsUrl").value.trim();
+      if(!url){
+        alert("Soru endpoint gir.");
+        return;
+      }
+
+      try{
+        const res = await fetch(url);
+        if(!res.ok) throw new Error("Soru endpoint hata verdi");
+        const data = await res.json();
+
+        if(!Array.isArray(data)){
+          throw new Error("Beklenen veri dizi değil");
+        }
+
+        state.questions = normalizeQuestions(data);
+        state.currentIndex = 0;
+        state.onlyDueMode = false;
+        saveState();
+        refreshAll();
+        alert("Sorular API üzerinden yüklendi.");
+      }catch(err){
+        alert("Sorular çekilemedi. Endpoint veya JSON formatını kontrol et.");
+        console.error(err);
+      }
+    }
+
+    function normalizeQuestions(list){
+      return list.map((q, i) => ({
+        id: q.id || `q_${Date.now()}_${i}`,
+        code: q.code || "",
+        topic: q.topic || "Genel",
+        subtopic: q.subtopic || "",
+        lang: q.lang || "tr",
+        question_tr: q.question_tr || "",
+        question_de: q.question_de || "",
+        options_tr: Array.isArray(q.options_tr) ? q.options_tr : [],
+        options_de: Array.isArray(q.options_de) ? q.options_de : [],
+        correctIndex: Number.isInteger(q.correctIndex) ? q.correctIndex : 0,
+        image: q.image || "",
+        explanation_tr: q.explanation_tr || "",
+        explanation_de: q.explanation_de || "",
+        memory_tip_tr: q.memory_tip_tr || q.memory_tip || "",
+        tags: Array.isArray(q.tags) ? q.tags : []
+      }));
+    }
+
+    function importQuestionsFromText(){
+      const text = document.getElementById("jsonImportArea").value.trim();
+      if(!text){
+        alert("JSON alanı boş.");
+        return;
+      }
+
+      try{
+        const data = JSON.parse(text);
+        if(!Array.isArray(data)) throw new Error("Dizi olmalı");
+        state.questions = normalizeQuestions(data);
+        state.currentIndex = 0;
+        state.onlyDueMode = false;
+        saveState();
+        refreshAll();
+        alert("JSON verisi içe aktarıldı.");
+      }catch(err){
+        alert("JSON formatı geçersiz.");
+        console.error(err);
+      }
+    }
+
+    function exportBackup(){
+      const backup = {
+        questions: state.questions,
+        progress: state.progress,
+        settings: state.settings,
+        api: state.api,
+        activity: state.activity
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "ehliyet-kart-yedek.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importBackupFile(file){
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const data = JSON.parse(reader.result);
+          state.questions = Array.isArray(data.questions) ? data.questions : [];
+          state.progress = data.progress || {};
+          state.settings = {...state.settings, ...(data.settings || {})};
+          state.api = {...state.api, ...(data.api || {})};
+          state.activity = Array.isArray(data.activity) ? data.activity : [];
+          state.currentIndex = 0;
+          state.onlyDueMode = false;
+          saveState();
+          refreshAll();
+          alert("Yedek yüklendi.");
+        }catch(err){
+          alert("Dosya okunamadı.");
+          console.error(err);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetAll(){
+      if(!confirm("Tüm kayıtlar silinsin mi?")) return;
+      localStorage.removeItem(STORAGE_KEYS.questions);
+      localStorage.removeItem(STORAGE_KEYS.progress);
+      localStorage.removeItem(STORAGE_KEYS.settings);
+      localStorage.removeItem(STORAGE_KEYS.activity);
+      localStorage.removeItem(STORAGE_KEYS.api);
+      state.questions = [];
+      state.progress = {};
+      state.activity = [];
+      state.currentIndex = 0;
+      state.onlyDueMode = false;
+      refreshAll();
+    }
+
+    function loadDemo(){
+      state.questions = normalizeQuestions(DEMO_QUESTIONS);
+      state.currentIndex = 0;
+      state.onlyDueMode = false;
+      saveState();
+      refreshAll();
+      alert("Örnek sorular yüklendi.");
+    }
+
+    function saveApiSettings(){
+      state.api.questionsUrl = document.getElementById("apiQuestionsUrl").value.trim();
+      state.api.analyzeUrl = document.getElementById("apiAnalyzeUrl").value.trim();
+      saveState();
+      alert("Endpointler kaydedildi.");
+    }
+
+    function saveSettings(){
+      const intervalsRaw = document.getElementById("settingIntervals").value.trim();
+      const intervals = intervalsRaw.split(",").map(x => parseInt(x.trim(),10)).filter(x => !isNaN(x) && x > 0);
+      if(!intervals.length){
+        alert("Tekrar günleri geçersiz.");
+        return;
+      }
+
+      state.settings.language = document.getElementById("settingLanguage").value;
+      state.settings.studyMode = document.getElementById("settingStudyMode").value;
+      state.settings.intervals = intervals;
+      state.settings.autoAI = document.getElementById("settingAutoAI").value === "true";
+      state.onlyDueMode = false;
+      saveState();
+      refreshAll();
+      alert("Ayarlar kaydedildi.");
+    }
+
+    function markCurrentHard(){
+      const q = getCurrentQuestion();
+      if(!q) return;
+      const p = getQuestionProgress(q.id);
+      p.hard = !p.hard;
+      saveState();
+      refreshAll();
+      alert(p.hard ? "Zor soru olarak işaretlendi." : "Zor soru işareti kaldırıldı.");
+    }
+
+    function saveCurrentManualAnalysis(){
+      const q = getCurrentQuestion();
+      if(!q) return;
+      const p = getQuestionProgress(q.id);
+
+      p.aiAnalysis = {
+        whyCorrect: document.getElementById("analysisWhyCorrect").textContent,
+        whyWrong: document.getElementById("analysisWhyWrong").textContent,
+        memoryTip: document.getElementById("analysisMemoryTip").textContent,
+        tags: Array.from(document.querySelectorAll("#analysisTags .tag")).map(x => x.textContent.trim()).filter(Boolean)
+      };
+
+      saveState();
+      alert("Analiz kaydedildi.");
+    }
+
+    function fillManualFormFromCurrent(){
+      const q = getCurrentQuestion();
+      if(!q){
+        alert("Aktif soru yok.");
+        return;
+      }
+
+      document.getElementById("mId").value = q.id || "";
+      document.getElementById("mCode").value = q.code || "";
+      document.getElementById("mTopic").value = q.topic || "";
+      document.getElementById("mSubtopic").value = q.subtopic || "";
+      document.getElementById("mQuestionTr").value = q.question_tr || "";
+      document.getElementById("mQuestionDe").value = q.question_de || "";
+      document.getElementById("mOpt1").value = (q.options_tr || [])[0] || "";
+      document.getElementById("mOpt2").value = (q.options_tr || [])[1] || "";
+      document.getElementById("mOpt3").value = (q.options_tr || [])[2] || "";
+      document.getElementById("mOpt4").value = (q.options_tr || [])[3] || "";
+      document.getElementById("mCorrectIndex").value = q.correctIndex ?? 0;
+      document.getElementById("mImage").value = q.image || "";
+      document.getElementById("mExplanationTr").value = q.explanation_tr || "";
+      document.getElementById("mMemoryTip").value = q.memory_tip_tr || "";
+      document.getElementById("mTags").value = (q.tags || []).join(", ");
+      alert("Mevcut soru forma aktarıldı.");
+    }
+
+    function clearManualForm(){
+      ["mId","mCode","mTopic","mSubtopic","mQuestionTr","mQuestionDe","mOpt1","mOpt2","mOpt3","mOpt4","mImage","mExplanationTr","mMemoryTip","mTags"].forEach(id => {
+        document.getElementById(id).value = "";
+      });
+      document.getElementById("mCorrectIndex").value = "0";
+    }
+
+    function addOrUpdateManualQuestion(){
+      const item = {
+        id: document.getElementById("mId").value.trim() || `q_${Date.now()}`,
+        code: document.getElementById("mCode").value.trim(),
+        topic: document.getElementById("mTopic").value.trim() || "Genel",
+        subtopic: document.getElementById("mSubtopic").value.trim(),
+        lang: "tr",
+        question_tr: document.getElementById("mQuestionTr").value.trim(),
+        question_de: document.getElementById("mQuestionDe").value.trim(),
+        options_tr: [
+          document.getElementById("mOpt1").value.trim(),
+          document.getElementById("mOpt2").value.trim(),
+          document.getElementById("mOpt3").value.trim(),
+          document.getElementById("mOpt4").value.trim()
+        ].filter(Boolean),
+        options_de: [],
+        correctIndex: parseInt(document.getElementById("mCorrectIndex").value, 10) || 0,
+        image: document.getElementById("mImage").value.trim(),
+        explanation_tr: document.getElementById("mExplanationTr").value.trim(),
+        explanation_de: "",
+        memory_tip_tr: document.getElementById("mMemoryTip").value.trim(),
+        tags: document.getElementById("mTags").value.split(",").map(x => x.trim()).filter(Boolean)
+      };
+
+      if(!item.question_tr){
+        alert("Türkçe soru metni gerekli.");
+        return;
+      }
+
+      if(item.options_tr.length < 2){
+        alert("En az 2 şık gir.");
+        return;
+      }
+
+      const idx = state.questions.findIndex(q => q.id === item.id);
+      if(idx >= 0){
+        state.questions[idx] = item;
+      } else {
+        state.questions.push(item);
+      }
+
+      saveState();
+      refreshAll();
+      alert("Soru kaydedildi.");
+    }
+
+    function bindEvents(){
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.addEventListener("click", () => switchSection(btn.dataset.section));
+      });
+
+      document.getElementById("btnLoadDemo").addEventListener("click", loadDemo);
+      document.getElementById("btnExport").addEventListener("click", exportBackup);
+      document.getElementById("importFile").addEventListener("change", e => {
+        const file = e.target.files?.[0];
+        if(file) importBackupFile(file);
+      });
+      document.getElementById("btnReset").addEventListener("click", resetAll);
+
+      document.getElementById("quickStartStudy").addEventListener("click", () => switchSection("study"));
+      document.getElementById("quickReview").addEventListener("click", () => switchSection("review"));
+
+      document.getElementById("btnPrevQuestion").addEventListener("click", () => {
+        state.currentIndex -= 1;
+        displayQuestion();
+      });
+      document.getElementById("btnNextQuestion").addEventListener("click", () => {
+        state.currentIndex += 1;
+        displayQuestion();
+      });
+      document.getElementById("btnRandomQuestion").addEventListener("click", () => {
+        const set = getCurrentQuestionSet();
+        if(!set.length) return;
+        state.currentIndex = Math.floor(Math.random() * set.length);
+        displayQuestion();
+      });
+      document.getElementById("btnStudyDueOnly").addEventListener("click", () => {
+        state.onlyDueMode = !state.onlyDueMode;
+        state.currentIndex = 0;
+        displayQuestion();
+      });
+      document.getElementById("btnSubmitAnswer").addEventListener("click", () => submitAnswer(false));
+      document.getElementById("btnShowAnswer").addEventListener("click", () => submitAnswer(true));
+      document.getElementById("btnMarkHard").addEventListener("click", markCurrentHard);
+      document.getElementById("btnClearChoice").addEventListener("click", () => {
+        state.selectedOption = null;
+        document.querySelectorAll(".option").forEach(x => x.classList.remove("selected"));
+      });
+      document.getElementById("btnAskAI").addEventListener("click", askAIAnalysis);
+      document.getElementById("btnSaveManualAnalysis").addEventListener("click", saveCurrentManualAnalysis);
+
+      document.getElementById("btnRefreshWrong").addEventListener("click", renderWrongTable);
+      document.getElementById("btnStartReview").addEventListener("click", () => {
+        state.onlyDueMode = true;
+        state.currentIndex = 0;
+        switchSection("study");
+        displayQuestion();
+      });
+
+      document.getElementById("btnImportJsonText").addEventListener("click", importQuestionsFromText);
+      document.getElementById("btnFetchQuestions").addEventListener("click", fetchQuestionsFromApi);
+      document.getElementById("btnSaveApiSettings").addEventListener("click", saveApiSettings);
+
+      document.getElementById("btnAddManualQuestion").addEventListener("click", addOrUpdateManualQuestion);
+      document.getElementById("btnFillManualFromCurrent").addEventListener("click", fillManualFormFromCurrent);
+      document.getElementById("btnClearManual").addEventListener("click", clearManualForm);
+
+      document.getElementById("btnSaveSettings").addEventListener("click", saveSettings);
+    }
+
+    function init(){
+      loadState();
+      bindEvents();
+
+      if(!state.questions.length){
+        state.questions = normalizeQuestions(DEMO_QUESTIONS);
+        saveState();
+      }
+
+      refreshAll();
+    }
+
+    init();
+  </script>
 </body>
 </html>
